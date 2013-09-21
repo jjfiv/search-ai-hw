@@ -10,23 +10,26 @@ final case class Node(problem: Problem, parent: Node, state: State, action: Acti
   def isGoal = problem.goal == state
 }
 
-trait Action {}
+trait Action {
+  def cost(): Double
+}
 trait State {}
 
 trait Problem {
-  final def startNode(): Node = Node(this, null, start, null, 0.0)
   def start: State
   def goal: State
-  def isGoal(state: State) = goal == state
-  def actions: Seq[Action]
+  def actions(from: State): Seq[Action]
   def heuristic(from: State): Double
-  def childNode(current: Node, step: Action): Node
+  def getNextState(from: State, action: Action): State
+
+  final def childNode(current: Node, step: Action): Node = {
+    val nextState = getNextState(current.state, step)
+    Node(this, current, nextState, step, current.pathCost() + step.cost)
+  }
+  final def startNode(): Node = Node(this, null, start, null, 0.0)
+  final def isGoal(state: State) = goal == state
 }
 
-trait TypedProblem[AT <: Action, ST <: State] extends Problem {
-  override def childNode(current: Node, step: Action): Node = makeChildNode(current, step.asInstanceOf[AT])
-  def makeChildNode(current: Node, step: AT): Node
-}
 
 object Main {
   def main(args: Array[String]) {
@@ -70,8 +73,8 @@ object Main {
     }
   }
 
-  def bfs(kp: Problem): SearchResult = {
-    val startNode = kp.startNode()
+  def bfs(prob: Problem): SearchResult = {
+    val startNode = prob.startNode()
     if(startNode.isGoal) {
       return FoundResult(startNode, 0)
     }
@@ -86,8 +89,8 @@ object Main {
 
       //println("BFS explore: "+candidate.state+" frontier.size="+frontier.size)
 
-      val newNodes: Seq[Node] = kp.actions.flatMap(action => {
-        val child = kp.childNode(candidate, action)
+      val newNodes: Seq[Node] = prob.actions(candidate.state).flatMap(action => {
+        val child = prob.childNode(candidate, action)
         if(frontier.exists(_.state == child.state) || explored.contains(child.state)) {
           None
         } else {
@@ -104,8 +107,8 @@ object Main {
     NoSolution()
   }
 
-  def astar(kp: Problem): SearchResult = {
-    val startNode = kp.startNode()
+  def astar(prob: Problem): SearchResult = {
+    val startNode = prob.startNode()
 
     var frontier = Seq(startNode)
     var explored = Set[State]()
@@ -122,17 +125,14 @@ object Main {
 
       //println("A* explore: "+candidate.state+" frontier.size="+frontier.size)
 
-      val newNodes: Seq[Node] = kp.actions.flatMap(action => {
-        val child = kp.childNode(candidate, action)
+      val newNodes: Seq[Node] = prob.actions(candidate.state).flatMap(action => {
+        val child = prob.childNode(candidate, action)
         if(frontier.exists(_.state == child.state) || explored.contains(child.state)) {
           None
         } else {
-          Some(kp.childNode(candidate, action))
+          Some(prob.childNode(candidate, action))
         }
       })
-
-      //val bestNew = newNodes.minBy(_.astarCost())
-      //println("A* expand "+candidate.state+" most likely: "+bestNew.state+ " h(n): "+bestNew.heuristicCost()+ " f(n): "+bestNew.pathCost)
 
       frontier = (frontier ++ newNodes).sortBy(_.astarCost())
     }
@@ -146,32 +146,26 @@ case class KnightState(x: Int, y: Int) extends State {
 }
 case class KnightAction(dx: Int, dy: Int) extends Action {
   override def toString = "A<"+dx+","+dy+">"
+  def cost() = 1.0
 }
 
-case class KnightProblem(goalX: Int, goalY: Int) extends TypedProblem[KnightAction, KnightState] {
+case class KnightProblem(goalX: Int, goalY: Int) extends Problem {
   val goal = KnightState(goalX, goalY)
   val start = KnightState(0,0)
 
-  val actions: Seq[Action] = {
-    Seq(
-      (1,2),
-      (2,1)
-    ).flatMap {
-      case (x,y) => Seq(KnightAction(x,y), KnightAction(-x,y), KnightAction(-x,-y), KnightAction(x,-y))
-    }
+  private val staticActions = Seq((1,2), (2,1)).flatMap {
+    case (x,y) => Seq(KnightAction(x,y), KnightAction(-x,y), KnightAction(-x,-y), KnightAction(x,-y))
   }
+  def actions(from: State) = staticActions
 
   def heuristic(from: State): Double = {
     val here = from.asInstanceOf[KnightState]
     math.floor(math.abs(goal.x - here.x) + math.abs(goal.y - here.y).toDouble / 3.0)
   }
 
-  def childState(parent: KnightState, action: KnightAction): KnightState = {
-    KnightState(parent.x + action.dx, parent.y + action.dy)
-  }
-
-  def makeChildNode(parent: Node, action: KnightAction): Node = {
-    val nextState = childState(parent.state.asInstanceOf[KnightState], action)
-    Node(this, parent, nextState, action, parent.pathCost + 1)
+  def getNextState(from: State, action: Action): State = {
+    val step = action.asInstanceOf[KnightAction]
+    val here = from.asInstanceOf[KnightState]
+    KnightState(here.x + step.dx, here.y + step.dy)
   }
 }
