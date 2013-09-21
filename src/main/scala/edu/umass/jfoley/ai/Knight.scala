@@ -47,6 +47,8 @@ case class KnightProblem(goalX: Int, goalY: Int) extends Problem {
   val goal = KnightState(goalX, goalY)
   val start = KnightState(0,0)
 
+  def isGoal(st: State) = st == goal
+
   private val staticActions = Seq((1,2), (2,1)).flatMap {
     case (x,y) => Seq(KnightAction(x,y), KnightAction(-x,y), KnightAction(-x,-y), KnightAction(x,-y))
   }

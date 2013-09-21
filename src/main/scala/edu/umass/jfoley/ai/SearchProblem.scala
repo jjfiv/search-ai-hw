@@ -8,7 +8,7 @@ final case class Node(problem: Problem, parent: Node, state: State, action: Acti
   def heuristicCost() = problem.heuristic(state)
   def pathCost() = cost
   def astarCost() = heuristicCost() + cost
-  def isGoal = problem.goal == state
+  def isGoal = problem.isGoal(state)
 }
 
 trait Action {
@@ -18,7 +18,7 @@ trait State {}
 
 trait Problem {
   def start: State
-  def goal: State
+  def isGoal(state: State): Boolean
   def actions(from: State): Seq[Action]
   def heuristic(from: State): Double
   def getNextState(from: State, action: Action): State
@@ -28,7 +28,6 @@ trait Problem {
     Node(this, current, nextState, step, current.pathCost() + step.cost)
   }
   final def startNode(): Node = Node(this, null, start, null, 0.0)
-  final def isGoal(state: State) = goal == state
 }
 
 
@@ -108,6 +107,41 @@ object SearchProblem {
       })
 
       frontier = frontier ++ newNodes
+    }
+
+    NoSolution()
+  }
+
+  /** Implement Greedy for debugging */
+  def greedy(prob: Problem): SearchResult = {
+    val startNode = prob.startNode()
+    if(startNode.isGoal) {
+      return FoundResult(startNode, 0)
+    }
+
+    var frontier = Seq(startNode)
+    var explored = Set[State]()
+
+    while(!frontier.isEmpty) {
+      val candidate = frontier.head
+      frontier = frontier.tail
+      explored += candidate.state
+
+      //println("BFS explore: "+candidate.state+" frontier.size="+frontier.size)
+
+      val newNodes: Seq[Node] = prob.actions(candidate.state).flatMap(action => {
+        val child = prob.childNode(candidate, action)
+        if(frontier.exists(_.state == child.state) || explored.contains(child.state)) {
+          None
+        } else {
+          if(child.isGoal) {
+            return FoundResult(child, explored.size)
+          }
+          Some(child)
+        }
+      })
+
+      frontier = (frontier ++ newNodes).sortBy(node => node.action.cost())
     }
 
     NoSolution()
