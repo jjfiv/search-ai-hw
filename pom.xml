@@ -6,7 +6,7 @@
   <version>0.1</version>
   <properties>
     <scala.version>2.10.2</scala.version>
-    <mainClass>edu.umass.jfoley.ai.Main</mainClass>
+    <mainClass>edu.umass.jfoley.ai.Knight$</mainClass>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <javaVersion>1.6</javaVersion>
   </properties>
