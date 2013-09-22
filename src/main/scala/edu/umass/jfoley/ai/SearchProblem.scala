@@ -1,7 +1,10 @@
 package edu.umass.jfoley.ai
 
+import gnu.trove.impl.hash.TObjectHash
+import gnu.trove.set.hash.THashSet
+
 sealed trait SearchResult
-case class FoundResult(node: Node, expandedNodes: Int) extends SearchResult
+case class FoundResult(node: Node, expandedNodes: Int, frontierNodes: Int) extends SearchResult
 case class NoSolution() extends SearchResult
 
 final case class Node(problem: Problem, parent: Node, state: State, action: Action, cost: Double) {
@@ -47,31 +50,30 @@ object SearchProblem {
   def astar(prob: Problem): SearchResult = {
     val startNode = prob.startNode()
 
-    var frontier = Seq(startNode)
-    var explored = Set[State]()
+    var frontier = new java.util.PriorityQueue[Node](100, new java.util.Comparator[Node] {
+      def compare(a: Node, b: Node): Int = { (a.astarCost() - b.astarCost()).toInt }
+    })
+    frontier.offer(startNode)
+    var explored = new THashSet[State]()
 
     while(!frontier.isEmpty) {
-      val candidate = frontier.head
-      frontier = frontier.tail
-      explored += candidate.state
+      val candidate = frontier.poll()
+      explored.add(candidate.state)
 
       // if the lowest cost thing is the goal, we're done
       if(candidate.isGoal) {
-        return FoundResult(candidate, explored.size)
+        return FoundResult(candidate, explored.size, frontier.size)
       }
 
       //println("A* explore: "+candidate.state+" frontier.size="+frontier.size)
 
-      val newNodes: Seq[Node] = prob.actions(candidate.state).flatMap(action => {
+      prob.actions(candidate.state).foreach(action => {
         val child = prob.childNode(candidate, action)
-        if(frontier.exists(_.state == child.state) || explored.contains(child.state)) {
-          None
-        } else {
-          Some(prob.childNode(candidate, action))
+        if(!explored.contains(child.state)) {
+          frontier.offer(prob.childNode(candidate, action))
+          explored.add(child.state)
         }
       })
-
-      frontier = (frontier ++ newNodes).sortBy(_.astarCost())
     }
 
     NoSolution()
@@ -81,7 +83,7 @@ object SearchProblem {
   def bfs(prob: Problem): SearchResult = {
     val startNode = prob.startNode()
     if(startNode.isGoal) {
-      return FoundResult(startNode, 0)
+      return FoundResult(startNode, 0, 0)
     }
 
     var frontier = Seq(startNode)
@@ -100,7 +102,7 @@ object SearchProblem {
           None
         } else {
           if(child.isGoal) {
-            return FoundResult(child, explored.size)
+            return FoundResult(child, explored.size, frontier.size)
           }
           Some(child)
         }
@@ -116,7 +118,7 @@ object SearchProblem {
   def greedy(prob: Problem): SearchResult = {
     val startNode = prob.startNode()
     if(startNode.isGoal) {
-      return FoundResult(startNode, 0)
+      return FoundResult(startNode, 0, 0)
     }
 
     var frontier = Seq(startNode)
@@ -135,7 +137,7 @@ object SearchProblem {
           None
         } else {
           if(child.isGoal) {
-            return FoundResult(child, explored.size)
+            return FoundResult(child, explored.size, frontier.size)
           }
           Some(child)
         }

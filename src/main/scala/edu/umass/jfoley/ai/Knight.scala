@@ -5,7 +5,7 @@ object Knight {
 
   def main(args: Array[String]) {
     bfs(KnightProblem(1,1)) match {
-      case FoundResult(node, _) => {
+      case FoundResult(node, _, _) => {
         println(node)
         printSolution(node)
       }
@@ -15,20 +15,20 @@ object Knight {
     }
 
     bfs(KnightProblem(4,3)) match {
-      case FoundResult(node, _) => {
+      case FoundResult(node, _, _) => {
         printSolution(node)
       }
     }
 
     astar(KnightProblem(4,3)) match {
-      case FoundResult(node, _) => printSolution(node)
+      case FoundResult(node, _, _) => printSolution(node)
     }
 
     astar(KnightProblem(100,100)) match {
-      case FoundResult(node, expNodes) => println("A* (0,0 -> 100,100) nodes: "+expNodes); printSolution(node)
+      case FoundResult(node, expNodes, _) => println("A* (0,0 -> 100,100) nodes: "+expNodes); printSolution(node)
     }
     bfs(KnightProblem(100,100)) match {
-      case FoundResult(node, expNodes) => println("BFS (0,0 -> 100,100) nodes: "+expNodes)//printSolution(node)
+      case FoundResult(node, expNodes, _) => println("BFS (0,0 -> 100,100) nodes: "+expNodes)//printSolution(node)
     }
   }
 
