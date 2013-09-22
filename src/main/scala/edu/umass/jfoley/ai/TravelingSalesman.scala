@@ -1,6 +1,7 @@
 package edu.umass.jfoley.ai
 
-import gnu.trove.map.hash.TIntIntHashMap
+import gnu.trove.map.hash.{TIntObjectHashMap, TIntIntHashMap}
+import gnu.trove.set.hash.{TCustomHashSet, TIntHashSet}
 
 object TravelingSalesman {
   import SearchProblem._
@@ -91,9 +92,9 @@ case class TSPProblem(cities: IndexedSeq[TSPPoint]) extends Problem {
     }
     mb.result()
   }
-  val allEdges = distances.toSeq.map {
+  val allEdges = distances.toIndexedSeq.map {
     case (CityEdge(a,b), weight) => MSTEdge(a,b,weight)
-  }
+  }.sortBy(_.a)
 
   def isGoal(s: State): Boolean = s.asInstanceOf[TSPState].route.toSet.size == numCities
 
@@ -127,13 +128,23 @@ case class TSPProblem(cities: IndexedSeq[TSPPoint]) extends Problem {
 
     hcMiss += 1
 
+    //TODO generate edges instead of filtering
+    val edges = new java.util.PriorityQueue[MSTEdge](100, new java.util.Comparator[MSTEdge] {
+      def compare(a: MSTEdge, b: MSTEdge): Int = { (a.weight - b.weight).toInt }
+    })
     val startTime = System.currentTimeMillis()
 
     // drop any edges that lead backwards
-    val edges = allEdges.filter(e => rest.contains(e.a) && rest.contains(e.b)).sortBy(_.weight)
+    var ei = 0
+    while(ei < allEdges.size) {
+      val curEdge = allEdges(ei)
+      if(rest.contains(curEdge.a) && rest.contains(curEdge.b)) {
+        edges.offer(curEdge)
+      }
+      ei += 1
+    }
 
     computeTime += System.currentTimeMillis() - startTime
-
 
     var weight = 0.0
     var groups = new TIntIntHashMap()
@@ -144,21 +155,15 @@ case class TSPProblem(cities: IndexedSeq[TSPPoint]) extends Problem {
       idx += 1
     }
 
-    //var groups = rest.zipWithIndex.toMap
-    idx = 0
-    while(idx < edges.size) {
-      val edge = edges(idx)
-    //edges.foreach(edge => {
+    while(!edges.isEmpty) {
+      val edge = edges.poll()
       val gA = groups.get(edge.a)
       val gB = groups.get(edge.b)
       if(gA != gB) {
         weight += edge.weight
         groups.put(edge.b, gA)
       }
-    //})
-      idx += 1
     }
-
 
     heuristicCache = heuristicCache.updated(rest,weight)
     return weight
