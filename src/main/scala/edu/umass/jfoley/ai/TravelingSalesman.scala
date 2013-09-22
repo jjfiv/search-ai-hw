@@ -18,7 +18,7 @@ object TravelingSalesman {
         case FoundResult(n, numNodes, frontier) => {
           val total = System.currentTimeMillis() - start
           println("A* cities: "+numCities+", Expanded: "+numNodes+", Considered: "+ frontier+" cost: " +n.pathCost() + " t: "+total+"ms")
-          println("HCMiss = "+problem.hcMiss+" HCHit = "+problem.hcHit)
+          println("HCMiss = "+problem.hcMiss+" HCHit = "+problem.hcHit+ " computeTime="+problem.computeTime)
         }
       }
       if(numCities < 12) {
@@ -46,7 +46,7 @@ object TravelingSalesman {
 
 case class TSPPoint(x: Double, y: Double)
 
-case class TSPState(distance: Double, route: Seq[Int]) extends State {
+case class TSPState(distance: Double, route: Seq[Int], remaining: Set[Int]) extends State {
   def currentCity = route.last
   val visited = route.toSet
 }
@@ -63,7 +63,7 @@ object CityEdge {
 case class CityEdge(src: Int, dest: Int)
 
 case class TSPProblem(cities: IndexedSeq[TSPPoint]) extends Problem {
-  def start: State = TSPState(0.0, Seq(0)) // start at the "first" city
+  def start: State = TSPState(0.0, Seq(0), cityIds.toSet) // start at the "first" city
   val numCities = cities.size
   val cityIds = (0 until numCities)
 
@@ -102,7 +102,6 @@ case class TSPProblem(cities: IndexedSeq[TSPPoint]) extends Problem {
   }
 
   def actions(from: State): Seq[Action] = {
-    var idx = 0
     val trip = from.asInstanceOf[TSPState]
     val cur = trip.currentCity
 
@@ -115,9 +114,11 @@ case class TSPProblem(cities: IndexedSeq[TSPPoint]) extends Problem {
   var hcHit = 0
   var hcMiss = 0
 
+  var computeTime = 0L
+
   def heuristic(from: State): Double = {
-    val visited = from.asInstanceOf[TSPState].visited
-    val rest = remainingCities(visited).toSet
+    val trip = from.asInstanceOf[TSPState]
+    val rest = trip.remaining
 
     if(heuristicCache.contains(rest)) {
       hcHit += 1
@@ -126,8 +127,13 @@ case class TSPProblem(cities: IndexedSeq[TSPPoint]) extends Problem {
 
     hcMiss += 1
 
+    val startTime = System.currentTimeMillis()
+
     // drop any edges that lead backwards
     val edges = allEdges.filter(e => rest.contains(e.a) && rest.contains(e.b)).sortBy(_.weight)
+
+    computeTime += System.currentTimeMillis() - startTime
+
 
     var weight = 0.0
     var groups = new TIntIntHashMap()
@@ -153,6 +159,7 @@ case class TSPProblem(cities: IndexedSeq[TSPPoint]) extends Problem {
       idx += 1
     }
 
+
     heuristicCache = heuristicCache.updated(rest,weight)
     return weight
   }
@@ -162,6 +169,8 @@ case class TSPProblem(cities: IndexedSeq[TSPPoint]) extends Problem {
     val nextTrip = action.asInstanceOf[TSPAction]
     val totalDistance = soFar.distance + nextTrip.distance
 
-    TSPState(totalDistance, soFar.route ++ Seq(nextTrip.city))
+    val route = soFar.route ++ Seq(nextTrip.city)
+
+    TSPState(totalDistance, route, remainingCities(route.toSet).toSet)
   }
 }

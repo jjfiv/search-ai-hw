@@ -8,7 +8,8 @@ case class FoundResult(node: Node, expandedNodes: Int, frontierNodes: Int) exten
 case class NoSolution() extends SearchResult
 
 final case class Node(problem: Problem, parent: Node, state: State, action: Action, cost: Double) {
-  def heuristicCost() = problem.heuristic(state)
+  protected val myEstimatedCost = problem.heuristic(state)
+  def heuristicCost() = myEstimatedCost
   def pathCost() = cost
   def astarCost() = heuristicCost() + cost
   def isGoal = problem.isGoal(state)
