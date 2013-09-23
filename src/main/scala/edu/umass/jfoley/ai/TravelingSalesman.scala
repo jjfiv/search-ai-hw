@@ -5,6 +5,7 @@ import edu.umass.cs.jfoley.ai.{Action, State, AStar, SearchProblem}
 import edu.umass.cs.jfoley.ai.tsp.TSPAction
 import gnu.trove.set.hash.TIntHashSet
 import gnu.trove.list.array.TIntArrayList
+import edu.umass.cs.jfoley.ai.tsp.TSPState
 
 object TravelingSalesman {
   val rand = new scala.util.Random(13)
@@ -30,14 +31,6 @@ object TravelingSalesman {
 }
 
 case class TSPPoint(x: Double, y: Double)
-
-case class TSPState(distance: Double, route: TIntArrayList, remaining: TIntHashSet) extends State {
-  def currentCity = route.get(route.size()-1)
-  def firstCity = route.get(0)
-  val visited = route.toArray.toSet
-}
-//case class TSPAction(city: Int, distance: Double) extends Action(distance) { }
-
 case class MSTEdge(a: Int, b: Int, weight: Double)
 
 // ugh, order matters
@@ -47,7 +40,7 @@ object CityEdge {
 case class CityEdge(src: Int, dest: Int)
 
 case class TSPProblem(cities: IndexedSeq[TSPPoint]) extends SearchProblem {
-  def start: State = TSPState(0.0, new TIntArrayList(), cityIdSet) // start at the "first" city
+  def start: State = new TSPState(0.0, new TIntArrayList(), cityIdSet) // start at the "first" city
   val numCities = cities.size
   val cityIds = 0 until numCities
   val cityIdSet = {
@@ -86,7 +79,7 @@ case class TSPProblem(cities: IndexedSeq[TSPPoint]) extends SearchProblem {
 
   def isGoal(s: State): Boolean = {
     val trip = s.asInstanceOf[TSPState]
-    trip.route.size() == numCities + 1 && trip.firstCity == trip.currentCity && trip.visited.size == numCities
+    trip.size == numCities + 1
   }
 
   def remainingCities(visited: TIntArrayList): TIntHashSet = {
@@ -119,7 +112,7 @@ case class TSPProblem(cities: IndexedSeq[TSPPoint]) extends SearchProblem {
       res.add(new TSPAction(start, distances(CityEdge.make(cur, start))))
     }
 
-    return res
+    res
   }
 
   var heuristicCache: Map[TIntHashSet, Double] = Map()
@@ -139,6 +132,7 @@ case class TSPProblem(cities: IndexedSeq[TSPPoint]) extends SearchProblem {
 
     hcMiss += 1
 
+    rest.size()
     //TODO generate edges instead of filtering
     val edges = new java.util.PriorityQueue[MSTEdge](100, new java.util.Comparator[MSTEdge] {
       def compare(a: MSTEdge, b: MSTEdge): Int = { (a.weight - b.weight).toInt }
@@ -177,7 +171,7 @@ case class TSPProblem(cities: IndexedSeq[TSPPoint]) extends SearchProblem {
     }
 
     heuristicCache = heuristicCache.updated(rest,weight)
-    return weight
+    weight
   }
 
   def getNextState(from: State, action: Action): State = {
@@ -190,6 +184,6 @@ case class TSPProblem(cities: IndexedSeq[TSPPoint]) extends SearchProblem {
     route.add(nextTrip.city)
     //val route = soFar.route ++ Seq(nextTrip.city)
 
-    TSPState(totalDistance, route, remainingCities(route))
+    new TSPState(totalDistance, route, remainingCities(route))
   }
 }
