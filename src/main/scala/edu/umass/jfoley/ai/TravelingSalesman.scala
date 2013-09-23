@@ -2,6 +2,7 @@ package edu.umass.jfoley.ai
 
 import gnu.trove.map.hash.TIntIntHashMap
 import edu.umass.cs.jfoley.ai.{Action, State, AStar, SearchProblem}
+import edu.umass.cs.jfoley.ai.tsp.TSPAction
 
 object TravelingSalesman {
   val rand = new scala.util.Random(13)
@@ -32,7 +33,7 @@ case class TSPState(distance: Double, route: Seq[Int], remaining: Set[Int]) exte
   def currentCity = route.last
   val visited = route.toSet
 }
-case class TSPAction(city: Int, distance: Double) extends Action(distance) { }
+//case class TSPAction(city: Int, distance: Double) extends Action(distance) { }
 
 case class MSTEdge(a: Int, b: Int, weight: Double)
 
@@ -90,17 +91,17 @@ case class TSPProblem(cities: IndexedSeq[TSPPoint]) extends SearchProblem {
 
     if(trip.route.isEmpty) {
       cityIds.foreach(idx => {
-        res.add(TSPAction(idx, 0))
+        res.add(new TSPAction(idx, 0))
       })
     } else if(trip.route.size < numCities) {
       val cur = trip.currentCity
       cityIds.filterNot(trip.route.contains).foreach(idx => {
-        res.add(TSPAction(idx, distances(CityEdge.make(cur,idx))))
+        res.add(new TSPAction(idx, distances(CityEdge.make(cur,idx))))
       })
     } else {
       val start = trip.route.head
       val cur = trip.route.last
-      res.add(TSPAction(start, distances(CityEdge.make(cur, start))))
+      res.add(new TSPAction(start, distances(CityEdge.make(cur, start))))
     }
     return res
   }
@@ -166,7 +167,7 @@ case class TSPProblem(cities: IndexedSeq[TSPPoint]) extends SearchProblem {
   def getNextState(from: State, action: Action): State = {
     val soFar = from.asInstanceOf[TSPState]
     val nextTrip = action.asInstanceOf[TSPAction]
-    val totalDistance = soFar.distance + nextTrip.distance
+    val totalDistance = soFar.distance + nextTrip.cost
 
     val route = soFar.route ++ Seq(nextTrip.city)
 

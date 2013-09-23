@@ -1,61 +1,18 @@
-package edu.umass.cs.jfoley.ai;
+package edu.umass.cs.jfoley.ai.knight;
+
+import edu.umass.cs.jfoley.ai.Action;
+import edu.umass.cs.jfoley.ai.SearchProblem;
+import edu.umass.cs.jfoley.ai.State;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class JKnightProblem extends SearchProblem {
-  public static class KnightState extends State {
-    public final int x;
-    public final int y;
-
-    public KnightState(int x, int y) {
-      this.x = x;
-      this.y = y;
-    }
-
-    @Override
-    public String toString() {
-      return "S("+x+","+y+")";
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      if(obj == this) {
-        return true;
-      } else if( !(obj instanceof KnightState)) {
-        return false;
-      } else {
-        KnightState that = (KnightState) obj;
-        return this.x == that.x && this.y == that.y;
-      }
-    }
-
-    @Override
-    public int hashCode() {
-      return Utility.hash(x) ^ Utility.hash(y);
-    }
-  }
-
-  public static class KnightAction extends Action {
-    public final int dx;
-    public final int dy;
-
-    public KnightAction(int x, int y) {
-      super(1.0);
-      this.dx = x;
-      this.dy = y;
-    }
-
-    @Override
-    public String toString() {
-      return "A<"+dx+","+dy+">";
-    }
-  }
+public class KnightProblem extends SearchProblem {
 
   private final KnightState goal;
 
-  public JKnightProblem(int x, int y) {
+  public KnightProblem(int x, int y) {
     this.goal = new KnightState(x, y);
   }
 
