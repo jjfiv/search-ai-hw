@@ -14,7 +14,7 @@ trait Action {
 }
 trait State {}
 
-object SearchProblem {
+object SP {
 
   /** Recursively print steps to solution */
   def printSolution(goal: SearchNode) {
@@ -38,7 +38,6 @@ object SearchProblem {
 
     while(!frontier.isEmpty) {
       val candidate = frontier.poll()
-      explored.add(candidate.state)
 
       // if the lowest cost thing is the goal, we're done
       if(candidate.isGoal) {
@@ -50,7 +49,7 @@ object SearchProblem {
       prob.actions(candidate.state).asScala.foreach(action => {
         val child = prob.childNode(candidate, action)
         if(!explored.contains(child.state)) {
-          frontier.offer(prob.childNode(candidate, action))
+          frontier.offer(child)
           explored.add(child.state)
         }
       })

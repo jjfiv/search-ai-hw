@@ -1,9 +1,11 @@
 package edu.umass.cs.jfoley.ai;
 
+import edu.umass.jfoley.ai.Action;
 import edu.umass.jfoley.ai.State;
 import gnu.trove.set.hash.THashSet;
 
 import java.util.Comparator;
+import java.util.List;
 import java.util.PriorityQueue;
 
 public class AStar {
@@ -23,10 +25,18 @@ public class AStar {
 
     while(!frontier.isEmpty()) {
       SearchNode candidate = frontier.poll();
-      explored.add(candidate.state);
 
       if(candidate.isGoal()) {
         return new SearchResult(candidate, explored.size(), frontier.size());
+      }
+
+      List<Action> nextActions = prob.actions(candidate.state);
+      for(Action action : nextActions) {
+        SearchNode child = prob.childNode(candidate, action);
+        if (!explored.contains(child.state)) {
+          frontier.offer(child);
+          explored.add(candidate.state);
+        }
       }
     }
 

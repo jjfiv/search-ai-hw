@@ -3,7 +3,7 @@ package edu.umass.jfoley.ai
 import edu.umass.cs.jfoley.ai.JKnightProblem
 
 object Knight {
-  import SearchProblem._
+  import SP._
 
   def main(args: Array[String]) {
     bfs(new JKnightProblem(1,1)) match {

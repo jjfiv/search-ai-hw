@@ -1,10 +1,10 @@
 package edu.umass.jfoley.ai
 
 import gnu.trove.map.hash.TIntIntHashMap
-import edu.umass.cs.jfoley.ai.SearchProblem
+import edu.umass.cs.jfoley.ai.{AStar, SearchProblem}
 
 object TravelingSalesman {
-  import SearchProblem._
+  import SP._
 
   val rand = new scala.util.Random(13)
 
@@ -12,15 +12,16 @@ object TravelingSalesman {
     (0 until n).map(_ => TSPPoint(rand.nextDouble(), rand.nextDouble())).toArray
   }
   def main(args: Array[String]) {
-    (3 until 400).foreach(numCities => {
-      val problem = TSPProblem(genCities(numCities))
+    (35 until 400).foreach(numCities => {
+      val cities = genCities(numCities)
+
       var start = System.currentTimeMillis()
-      astar(problem) match {
-        case FoundResult(n, numNodes, frontier) => {
-          val total = System.currentTimeMillis() - start
-          println("A* cities: "+numCities+", Expanded: "+numNodes+", Considered: "+ frontier+" cost: " +n.pathCost() + " t: "+total+"ms")
-          println("HCMiss = "+problem.hcMiss+" HCHit = "+problem.hcHit+ " computeTime="+problem.computeTime+ " routeLength:"+n.state.asInstanceOf[TSPState].route.size)
-        }
+      val problem2 = TSPProblem(cities)
+      val sr = AStar.search(problem2)
+      if(sr != null) {
+        val total = System.currentTimeMillis() - start
+        println("JAVA A* cities: "+numCities+", Expanded: "+sr.expandedNodes+", Frontier: "+sr.frontierNodes+" cost: " +sr.result.pathCost() + " t: "+total+"ms")
+        println("     HCMiss = "+problem2.hcMiss+" HCHit = "+problem2.hcHit+ " computeTime="+problem2.computeTime+ " routeLength:"+sr.result.state.asInstanceOf[TSPState].route.size)
       }
     })
 
