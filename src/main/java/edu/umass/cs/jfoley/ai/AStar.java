@@ -1,7 +1,5 @@
 package edu.umass.cs.jfoley.ai;
 
-import edu.umass.jfoley.ai.Action;
-import edu.umass.jfoley.ai.State;
 import gnu.trove.set.hash.THashSet;
 
 import java.util.Comparator;

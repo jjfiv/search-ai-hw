@@ -1,11 +1,9 @@
 package edu.umass.jfoley.ai
 
 import gnu.trove.map.hash.TIntIntHashMap
-import edu.umass.cs.jfoley.ai.{AStar, SearchProblem}
+import edu.umass.cs.jfoley.ai.{Action, State, AStar, SearchProblem}
 
 object TravelingSalesman {
-  import SP._
-
   val rand = new scala.util.Random(13)
 
   def genCities(n: Int): Array[TSPPoint] = {
@@ -34,9 +32,7 @@ case class TSPState(distance: Double, route: Seq[Int], remaining: Set[Int]) exte
   def currentCity = route.last
   val visited = route.toSet
 }
-case class TSPAction(city: Int, distance: Double) extends Action {
-  def cost() = distance
-}
+case class TSPAction(city: Int, distance: Double) extends Action(distance) { }
 
 case class MSTEdge(a: Int, b: Int, weight: Double)
 

@@ -1,14 +1,11 @@
 package edu.umass.cs.jfoley.ai;
 
-
-import edu.umass.jfoley.ai.*;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class JKnightProblem extends SearchProblem {
-  public static class KnightState implements State {
+  public static class KnightState extends State {
     public final int x;
     public final int y;
 
@@ -40,18 +37,16 @@ public class JKnightProblem extends SearchProblem {
     }
   }
 
-  public static class KnightAction implements Action {
+  public static class KnightAction extends Action {
     public final int dx;
     public final int dy;
 
     public KnightAction(int x, int y) {
+      super(1.0);
       this.dx = x;
       this.dy = y;
     }
-    @Override
-    public double cost() {
-      return 1.0;
-    }
+
     @Override
     public String toString() {
       return "A<"+dx+","+dy+">";
