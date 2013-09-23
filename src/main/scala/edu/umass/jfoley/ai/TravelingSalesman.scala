@@ -1,7 +1,6 @@
 package edu.umass.jfoley.ai
 
-import gnu.trove.map.hash.{TIntObjectHashMap, TIntIntHashMap}
-import gnu.trove.set.hash.{TCustomHashSet, TIntHashSet}
+import gnu.trove.map.hash.TIntIntHashMap
 
 object TravelingSalesman {
   import SearchProblem._
@@ -19,25 +18,7 @@ object TravelingSalesman {
         case FoundResult(n, numNodes, frontier) => {
           val total = System.currentTimeMillis() - start
           println("A* cities: "+numCities+", Expanded: "+numNodes+", Considered: "+ frontier+" cost: " +n.pathCost() + " t: "+total+"ms")
-          println("HCMiss = "+problem.hcMiss+" HCHit = "+problem.hcHit+ " computeTime="+problem.computeTime)
-        }
-      }
-      if(numCities < 12) {
-        start = System.currentTimeMillis()
-        greedy(problem) match {
-          case FoundResult(n, numNodes, frontier) => {
-            val total = System.currentTimeMillis() - start
-            println("Greedy cities: "+numCities+", Expanded: "+numNodes+", Considered: "+ frontier+" cost: " +n.pathCost() + " t: "+total+"ms")
-          }
-        }
-      }
-      if(numCities < 9) {
-        start = System.currentTimeMillis()
-        bfs(problem) match {
-          case FoundResult(n, numNodes, frontier) => {
-            val total = System.currentTimeMillis() - start
-            println("BFS cities: "+numCities+", Expanded: "+numNodes+", Considered: "+ frontier+" cost: " +n.pathCost() + " t: "+total+"ms")
-          }
+          println("HCMiss = "+problem.hcMiss+" HCHit = "+problem.hcHit+ " computeTime="+problem.computeTime+ " routeLength:"+n.state.asInstanceOf[TSPState].route.size)
         }
       }
     })
@@ -64,7 +45,7 @@ object CityEdge {
 case class CityEdge(src: Int, dest: Int)
 
 case class TSPProblem(cities: IndexedSeq[TSPPoint]) extends Problem {
-  def start: State = TSPState(0.0, Seq(0), cityIds.toSet) // start at the "first" city
+  def start: State = TSPState(0.0, Seq(), cityIds.toSet) // start at the "first" city
   val numCities = cities.size
   val cityIds = (0 until numCities)
 
@@ -96,19 +77,31 @@ case class TSPProblem(cities: IndexedSeq[TSPPoint]) extends Problem {
     case (CityEdge(a,b), weight) => MSTEdge(a,b,weight)
   }.sortBy(_.a)
 
-  def isGoal(s: State): Boolean = s.asInstanceOf[TSPState].route.toSet.size == numCities
+  def isGoal(s: State): Boolean = {
+    val route = s.asInstanceOf[TSPState].route
+    route.size == numCities + 1 && route.head == route.last && route.toSet.size == numCities
+  }
 
-  def remainingCities(visited: Set[Int]) = {
-    cityIds.filterNot(visited.contains)
+  def remainingCities(visited: Seq[Int]) = {
+    cityIds.filterNot(visited.contains) ++ Seq(visited.head)
   }
 
   def actions(from: State): Seq[Action] = {
     val trip = from.asInstanceOf[TSPState]
-    val cur = trip.currentCity
-
-    remainingCities(trip.visited).map(idx => {
-      TSPAction(idx, distances(CityEdge.make(cur,idx)))
-    })
+    if(trip.route.isEmpty) {
+      cityIds.map(idx => {
+        TSPAction(idx, 0)
+      })
+    } else if(trip.route.size < numCities) {
+      val cur = trip.currentCity
+      cityIds.filterNot(trip.route.contains).map(idx => {
+        TSPAction(idx, distances(CityEdge.make(cur,idx)))
+      })
+    } else {
+      val start = trip.route.head
+      val cur = trip.route.last
+      Seq(TSPAction(start, distances(CityEdge.make(cur, start))))
+    }
   }
 
   var heuristicCache: Map[Set[Int], Double] = Map()
@@ -176,6 +169,6 @@ case class TSPProblem(cities: IndexedSeq[TSPPoint]) extends Problem {
 
     val route = soFar.route ++ Seq(nextTrip.city)
 
-    TSPState(totalDistance, route, remainingCities(route.toSet).toSet)
+    TSPState(totalDistance, route, remainingCities(route).toSet)
   }
 }
