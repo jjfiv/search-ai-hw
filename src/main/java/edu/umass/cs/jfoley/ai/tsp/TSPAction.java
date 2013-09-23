@@ -9,4 +9,9 @@ public class TSPAction extends Action {
     super(distance);
     this.city = city;
   }
+
+  @Override
+  public String toString() {
+    return "TSPAction("+city+","+this.cost+")";
+  }
 }

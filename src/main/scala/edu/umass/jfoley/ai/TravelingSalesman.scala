@@ -3,6 +3,8 @@ package edu.umass.jfoley.ai
 import gnu.trove.map.hash.TIntIntHashMap
 import edu.umass.cs.jfoley.ai.{Action, State, AStar, SearchProblem}
 import edu.umass.cs.jfoley.ai.tsp.TSPAction
+import gnu.trove.set.hash.TIntHashSet
+import gnu.trove.list.array.TIntArrayList
 
 object TravelingSalesman {
   val rand = new scala.util.Random(13)
@@ -29,9 +31,10 @@ object TravelingSalesman {
 
 case class TSPPoint(x: Double, y: Double)
 
-case class TSPState(distance: Double, route: Seq[Int], remaining: Set[Int]) extends State {
-  def currentCity = route.last
-  val visited = route.toSet
+case class TSPState(distance: Double, route: TIntArrayList, remaining: TIntHashSet) extends State {
+  def currentCity = route.get(route.size()-1)
+  def firstCity = route.get(0)
+  val visited = route.toArray.toSet
 }
 //case class TSPAction(city: Int, distance: Double) extends Action(distance) { }
 
@@ -44,9 +47,14 @@ object CityEdge {
 case class CityEdge(src: Int, dest: Int)
 
 case class TSPProblem(cities: IndexedSeq[TSPPoint]) extends SearchProblem {
-  def start: State = TSPState(0.0, Seq(), cityIds.toSet) // start at the "first" city
+  def start: State = TSPState(0.0, new TIntArrayList(), cityIdSet) // start at the "first" city
   val numCities = cities.size
-  val cityIds = (0 until numCities)
+  val cityIds = 0 until numCities
+  val cityIdSet = {
+    val b = new TIntHashSet()
+    b.addAll(cityIds.toArray)
+    b
+  }
 
   // I hate scala collections
   val distances : Map[CityEdge, Double] = {
@@ -77,12 +85,19 @@ case class TSPProblem(cities: IndexedSeq[TSPPoint]) extends SearchProblem {
   }.sortBy(_.a)
 
   def isGoal(s: State): Boolean = {
-    val route = s.asInstanceOf[TSPState].route
-    route.size == numCities + 1 && route.head == route.last && route.toSet.size == numCities
+    val trip = s.asInstanceOf[TSPState]
+    trip.route.size() == numCities + 1 && trip.firstCity == trip.currentCity && trip.visited.size == numCities
   }
 
-  def remainingCities(visited: Seq[Int]) = {
-    cityIds.filterNot(visited.contains) ++ Seq(visited.head)
+  def remainingCities(visited: TIntArrayList): TIntHashSet = {
+    val opposite = new TIntHashSet()
+    cityIds.foreach(id => {
+      if(!visited.contains(id)) {
+        opposite.add(id)
+      }
+    })
+    opposite.add(visited.getQuick(0))
+    opposite
   }
 
   def actions(from: State): java.util.List[Action] = {
@@ -99,14 +114,15 @@ case class TSPProblem(cities: IndexedSeq[TSPPoint]) extends SearchProblem {
         res.add(new TSPAction(idx, distances(CityEdge.make(cur,idx))))
       })
     } else {
-      val start = trip.route.head
-      val cur = trip.route.last
+      val start = trip.firstCity
+      val cur = trip.currentCity
       res.add(new TSPAction(start, distances(CityEdge.make(cur, start))))
     }
+
     return res
   }
 
-  var heuristicCache: Map[Set[Int], Double] = Map()
+  var heuristicCache: Map[TIntHashSet, Double] = Map()
   var hcHit = 0
   var hcMiss = 0
 
@@ -143,7 +159,7 @@ case class TSPProblem(cities: IndexedSeq[TSPPoint]) extends SearchProblem {
 
     var weight = 0.0
     var groups = new TIntIntHashMap()
-    val others = rest.toIndexedSeq
+    val others = rest.toArray
     var idx = 0
     while(idx < others.size) {
       groups.put(others(idx), idx)
@@ -169,8 +185,11 @@ case class TSPProblem(cities: IndexedSeq[TSPPoint]) extends SearchProblem {
     val nextTrip = action.asInstanceOf[TSPAction]
     val totalDistance = soFar.distance + nextTrip.cost
 
-    val route = soFar.route ++ Seq(nextTrip.city)
+    val route = new TIntArrayList()
+    route.addAll(soFar.route)
+    route.add(nextTrip.city)
+    //val route = soFar.route ++ Seq(nextTrip.city)
 
-    TSPState(totalDistance, route, remainingCities(route).toSet)
+    TSPState(totalDistance, route, remainingCities(route))
   }
 }
