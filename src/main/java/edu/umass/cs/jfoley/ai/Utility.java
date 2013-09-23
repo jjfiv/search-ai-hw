@@ -10,4 +10,10 @@ public class Utility {
     hashCode ^= (hashCode >>> 20) ^ (hashCode >>> 12);
     return hashCode ^ (hashCode >>> 7) ^ (hashCode >>> 4);
   }
+
+  public static int compare(double a, double b) {
+    if(a < b) return -1;
+    if (b < a) return 1;
+    return 0;
+  }
 }

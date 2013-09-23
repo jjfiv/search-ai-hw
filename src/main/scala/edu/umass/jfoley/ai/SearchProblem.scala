@@ -1,45 +1,23 @@
 package edu.umass.jfoley.ai
 
-import gnu.trove.impl.hash.TObjectHash
 import gnu.trove.set.hash.THashSet
 import scala.collection.JavaConverters._
+import edu.umass.cs.jfoley.ai.{SearchProblem, SearchNode}
 
 sealed trait SearchResult
-case class FoundResult(node: Node, expandedNodes: Int, frontierNodes: Int) extends SearchResult
+case class FoundResult(node: SearchNode, expandedNodes: Int, frontierNodes: Int) extends SearchResult
 case class NoSolution() extends SearchResult
 
-final case class Node(problem: Problem, parent: Node, state: State, action: Action, cost: Double) {
-  protected val myEstimatedCost = problem.heuristic(state)
-  def heuristicCost() = myEstimatedCost
-  def pathCost() = cost
-  def astarCost() = heuristicCost() + cost
-  def isGoal = problem.isGoal(state)
-}
 
 trait Action {
   def cost(): Double
 }
 trait State {}
 
-trait Problem {
-  def start: State
-  def isGoal(state: State): Boolean
-  def actions(from: State): java.util.List[Action]
-  def heuristic(from: State): Double
-  def getNextState(from: State, action: Action): State
-
-  def childNode(current: Node, step: Action): Node = {
-    val nextState = getNextState(current.state, step)
-    Node(this, current, nextState, step, current.pathCost() + step.cost)
-  }
-  def startNode(): Node = Node(this, null, start, null, 0.0)
-}
-
-
 object SearchProblem {
 
   /** Recursively print steps to solution */
-  def printSolution(goal: Node) {
+  def printSolution(goal: SearchNode) {
     if(goal.parent != null) {
       printSolution(goal.parent)
       println(goal.action+" -> "+goal.state)
@@ -49,11 +27,11 @@ object SearchProblem {
   }
 
   /** Implement A* Search */
-  def astar(prob: Problem): SearchResult = {
+  def astar(prob: SearchProblem): SearchResult = {
     val startNode = prob.startNode()
 
-    var frontier = new java.util.PriorityQueue[Node](100, new java.util.Comparator[Node] {
-      def compare(a: Node, b: Node): Int = { (a.astarCost() - b.astarCost()).toInt }
+    var frontier = new java.util.PriorityQueue[SearchNode](100, new java.util.Comparator[SearchNode] {
+      def compare(a: SearchNode, b: SearchNode): Int = { (a.astarCost() - b.astarCost()).toInt }
     })
     frontier.offer(startNode)
     var explored = new THashSet[State]()
@@ -82,7 +60,7 @@ object SearchProblem {
   }
 
   /** Implement BFS for debugging */
-  def bfs(prob: Problem): SearchResult = {
+  def bfs(prob: SearchProblem): SearchResult = {
     val startNode = prob.startNode()
     if(startNode.isGoal) {
       return FoundResult(startNode, 0, 0)
@@ -98,7 +76,7 @@ object SearchProblem {
 
       //println("BFS explore: "+candidate.state+" frontier.size="+frontier.size)
 
-      val newNodes: Seq[Node] = prob.actions(candidate.state).asScala.flatMap(action => {
+      val newNodes: Seq[SearchNode] = prob.actions(candidate.state).asScala.flatMap(action => {
         val child = prob.childNode(candidate, action)
         if(frontier.exists(_.state == child.state) || explored.contains(child.state)) {
           None
@@ -117,7 +95,7 @@ object SearchProblem {
   }
 
   /** Implement Greedy for debugging */
-  def greedy(prob: Problem): SearchResult = {
+  def greedy(prob: SearchProblem): SearchResult = {
     val startNode = prob.startNode()
     if(startNode.isGoal) {
       return FoundResult(startNode, 0, 0)
@@ -133,7 +111,7 @@ object SearchProblem {
 
       //println("BFS explore: "+candidate.state+" frontier.size="+frontier.size)
 
-      val newNodes: Seq[Node] = prob.actions(candidate.state).asScala.flatMap(action => {
+      val newNodes: Seq[SearchNode] = prob.actions(candidate.state).asScala.flatMap(action => {
         val child = prob.childNode(candidate, action)
         if(frontier.exists(_.state == child.state) || explored.contains(child.state)) {
           None

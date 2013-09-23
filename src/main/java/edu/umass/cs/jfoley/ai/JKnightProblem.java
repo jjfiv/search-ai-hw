@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class JKnightProblem implements Problem {
+public class JKnightProblem extends SearchProblem {
   public static class KnightState implements State {
     public final int x;
     public final int y;
@@ -104,16 +104,5 @@ public class JKnightProblem implements Problem {
     KnightAction step = (KnightAction) action;
     KnightState here = (KnightState) from;
     return new KnightState(here.x + step.dx, here.y + step.dy);
-  }
-
-  @Override
-  public Node startNode() {
-    return new Node(this, null, start(), null, 0.0);
-  }
-
-  @Override
-  public Node childNode(Node current, Action step) {
-    State next = getNextState(current.state(), step);
-    return new Node(this, current, next, step, current.pathCost() + step.cost());
   }
 }

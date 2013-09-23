@@ -3,7 +3,7 @@ package edu.umass.cs.jfoley.ai;
 import edu.umass.jfoley.ai.*;
 
 public class SearchNode {
-  public final Problem problem;
+  public final SearchProblem problem;
   public final State state;
   public final Action action;
   public final SearchNode parent;
@@ -12,7 +12,7 @@ public class SearchNode {
   private boolean cachedHeuristic = false;
   private double cachedHeuristicValue = 0;
 
-  public SearchNode(Problem problem, SearchNode parent, State state, Action action, double cost) {
+  public SearchNode(SearchProblem problem, SearchNode parent, State state, Action action, double cost) {
     this.problem = problem;
     this.parent = parent;
     this.state = state;

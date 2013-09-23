@@ -1,6 +1,7 @@
 package edu.umass.jfoley.ai
 
 import gnu.trove.map.hash.TIntIntHashMap
+import edu.umass.cs.jfoley.ai.SearchProblem
 
 object TravelingSalesman {
   import SearchProblem._
@@ -44,7 +45,7 @@ object CityEdge {
 }
 case class CityEdge(src: Int, dest: Int)
 
-case class TSPProblem(cities: IndexedSeq[TSPPoint]) extends Problem {
+case class TSPProblem(cities: IndexedSeq[TSPPoint]) extends SearchProblem {
   def start: State = TSPState(0.0, Seq(), cityIds.toSet) // start at the "first" city
   val numCities = cities.size
   val cityIds = (0 until numCities)
