@@ -1,10 +1,12 @@
 package edu.umass.jfoley.ai
 
+import edu.umass.cs.jfoley.ai.JKnightProblem
+
 object Knight {
   import SearchProblem._
 
   def main(args: Array[String]) {
-    bfs(KnightProblem(1,1)) match {
+    bfs(new JKnightProblem(1,1)) match {
       case FoundResult(node, _, _) => {
         println(node)
         printSolution(node)
@@ -14,20 +16,20 @@ object Knight {
       }
     }
 
-    bfs(KnightProblem(4,3)) match {
+    bfs(new JKnightProblem(4,3)) match {
       case FoundResult(node, _, _) => {
         printSolution(node)
       }
     }
 
-    astar(KnightProblem(4,3)) match {
+    astar(new JKnightProblem(4,3)) match {
       case FoundResult(node, _, _) => printSolution(node)
     }
 
-    astar(KnightProblem(100,100)) match {
+    astar(new JKnightProblem(100,100)) match {
       case FoundResult(node, expNodes, _) => println("A* (0,0 -> 100,100) nodes: "+expNodes); printSolution(node)
     }
-    bfs(KnightProblem(100,100)) match {
+    bfs(new JKnightProblem(100,100)) match {
       case FoundResult(node, expNodes, _) => println("BFS (0,0 -> 100,100) nodes: "+expNodes)//printSolution(node)
     }
   }
@@ -49,9 +51,19 @@ case class KnightProblem(goalX: Int, goalY: Int) extends Problem {
 
   def isGoal(st: State) = st == goal
 
-  private val staticActions = Seq((1,2), (2,1)).flatMap {
-    case (x,y) => Seq(KnightAction(x,y), KnightAction(-x,y), KnightAction(-x,-y), KnightAction(x,-y))
+  private val staticActions = {
+    val res = new java.util.ArrayList[Action]
+    Seq((1,2), (2,1)).foreach {
+      case (x,y) => {
+        res.add(KnightAction(x,y))
+        res.add(KnightAction(-x,y))
+        res.add(KnightAction(-x,-y))
+        res.add(KnightAction(x,-y))
+      }
+    }
+    res
   }
+
   def actions(from: State) = staticActions
 
   def heuristic(from: State): Double = {

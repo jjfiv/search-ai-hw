@@ -86,22 +86,25 @@ case class TSPProblem(cities: IndexedSeq[TSPPoint]) extends Problem {
     cityIds.filterNot(visited.contains) ++ Seq(visited.head)
   }
 
-  def actions(from: State): Seq[Action] = {
+  def actions(from: State): java.util.List[Action] = {
     val trip = from.asInstanceOf[TSPState]
+    val res = new java.util.ArrayList[Action]
+
     if(trip.route.isEmpty) {
-      cityIds.map(idx => {
-        TSPAction(idx, 0)
+      cityIds.foreach(idx => {
+        res.add(TSPAction(idx, 0))
       })
     } else if(trip.route.size < numCities) {
       val cur = trip.currentCity
-      cityIds.filterNot(trip.route.contains).map(idx => {
-        TSPAction(idx, distances(CityEdge.make(cur,idx)))
+      cityIds.filterNot(trip.route.contains).foreach(idx => {
+        res.add(TSPAction(idx, distances(CityEdge.make(cur,idx))))
       })
     } else {
       val start = trip.route.head
       val cur = trip.route.last
-      Seq(TSPAction(start, distances(CityEdge.make(cur, start))))
+      res.add(TSPAction(start, distances(CityEdge.make(cur, start))))
     }
+    return res
   }
 
   var heuristicCache: Map[Set[Int], Double] = Map()

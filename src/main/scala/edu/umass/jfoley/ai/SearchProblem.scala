@@ -2,6 +2,7 @@ package edu.umass.jfoley.ai
 
 import gnu.trove.impl.hash.TObjectHash
 import gnu.trove.set.hash.THashSet
+import scala.collection.JavaConverters._
 
 sealed trait SearchResult
 case class FoundResult(node: Node, expandedNodes: Int, frontierNodes: Int) extends SearchResult
@@ -23,15 +24,15 @@ trait State {}
 trait Problem {
   def start: State
   def isGoal(state: State): Boolean
-  def actions(from: State): Seq[Action]
+  def actions(from: State): java.util.List[Action]
   def heuristic(from: State): Double
   def getNextState(from: State, action: Action): State
 
-  final def childNode(current: Node, step: Action): Node = {
+  def childNode(current: Node, step: Action): Node = {
     val nextState = getNextState(current.state, step)
     Node(this, current, nextState, step, current.pathCost() + step.cost)
   }
-  final def startNode(): Node = Node(this, null, start, null, 0.0)
+  def startNode(): Node = Node(this, null, start, null, 0.0)
 }
 
 
@@ -68,7 +69,7 @@ object SearchProblem {
 
       //println("A* explore: "+candidate.state+" frontier.size="+frontier.size)
 
-      prob.actions(candidate.state).foreach(action => {
+      prob.actions(candidate.state).asScala.foreach(action => {
         val child = prob.childNode(candidate, action)
         if(!explored.contains(child.state)) {
           frontier.offer(prob.childNode(candidate, action))
@@ -97,7 +98,7 @@ object SearchProblem {
 
       //println("BFS explore: "+candidate.state+" frontier.size="+frontier.size)
 
-      val newNodes: Seq[Node] = prob.actions(candidate.state).flatMap(action => {
+      val newNodes: Seq[Node] = prob.actions(candidate.state).asScala.flatMap(action => {
         val child = prob.childNode(candidate, action)
         if(frontier.exists(_.state == child.state) || explored.contains(child.state)) {
           None
@@ -132,7 +133,7 @@ object SearchProblem {
 
       //println("BFS explore: "+candidate.state+" frontier.size="+frontier.size)
 
-      val newNodes: Seq[Node] = prob.actions(candidate.state).flatMap(action => {
+      val newNodes: Seq[Node] = prob.actions(candidate.state).asScala.flatMap(action => {
         val child = prob.childNode(candidate, action)
         if(frontier.exists(_.state == child.state) || explored.contains(child.state)) {
           None
