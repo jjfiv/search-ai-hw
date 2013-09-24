@@ -7,16 +7,8 @@ import java.util.List;
 import java.util.PriorityQueue;
 
 public class AStar {
-
-  private static class NodeComparator implements Comparator<SearchNode> {
-    @Override
-    public int compare(SearchNode a, SearchNode b) {
-      return Utility.compare(a.astarCost(), b.astarCost());
-    }
-  }
-
-  public static SearchResult search(SearchProblem prob) {
-    PriorityQueue<SearchNode> frontier = new PriorityQueue<SearchNode>(10, new NodeComparator());
+  public static SearchResult generic(SearchProblem prob, Comparator<SearchNode> cmp) {
+    PriorityQueue<SearchNode> frontier = new PriorityQueue<SearchNode>(10, cmp);
     frontier.offer(prob.startNode());
 
     THashSet<State> explored = new THashSet<State>();
@@ -39,5 +31,23 @@ public class AStar {
     }
 
     return null;
+  }
+
+  public static SearchResult search(SearchProblem prob) {
+    return generic(prob, new Comparator<SearchNode>() {
+      @Override
+      public int compare(SearchNode a, SearchNode b) {
+        return Utility.compare(a.astarCost(), b.astarCost());
+      }
+    });
+  }
+
+  public static SearchResult bfs(SearchProblem prob) {
+    return generic(prob, new Comparator<SearchNode>() {
+      @Override
+      public int compare(SearchNode a, SearchNode b) {
+        return Utility.compare(a.cost, b.cost);
+      }
+    });
   }
 }

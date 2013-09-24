@@ -1,7 +1,5 @@
 package edu.umass.cs.jfoley.ai;
 
-import edu.umass.jfoley.ai.*;
-
 public class SearchNode {
   public final SearchProblem problem;
   public final State state;

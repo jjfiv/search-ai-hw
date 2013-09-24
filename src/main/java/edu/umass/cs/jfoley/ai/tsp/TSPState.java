@@ -37,6 +37,10 @@ public class TSPState extends State {
     return _visited;
   }
 
+  public String toString() {
+    return "TSPState: "+route.toString();
+  }
+
   @Override
   public int hashCode() {
     return route.hashCode();
