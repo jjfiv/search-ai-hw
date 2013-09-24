@@ -36,4 +36,9 @@ public class SearchNode {
   public boolean isGoal() {
     return problem.isGoal(state);
   }
+
+  @Override
+  public String toString() {
+    return String.format("Node(%s, %s)", action, state);
+  }
 }

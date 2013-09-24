@@ -17,13 +17,9 @@ public class EuclideanTSP extends SearchProblem {
 
   @Override
   public State start() {
-    TIntHashSet remaining = new TIntHashSet();
-    for(int i=1; i<numCities; i++) {
-      remaining.add(i);
-    }
     TIntArrayList visited = new TIntArrayList();
     visited.add(0);
-    return new TSPState(0.0, visited, remaining);
+    return new TSPState(0.0, visited, remainingCities(visited));
   }
 
   @Override
@@ -44,18 +40,16 @@ public class EuclideanTSP extends SearchProblem {
   public List<Action> actions(State from) {
     TSPState trip = (TSPState) from;
 
+    TIntHashSet foo = remainingCities(trip.route);
+    assert(foo.equals(trip.remaining));
+
     ArrayList<Action> results = new ArrayList<Action>();
+
+    assert(trip.remaining.equals(remainingCities(trip.route)));
 
     assert(trip.size != 0);
     if(trip.size < numCities) {
       int cur = trip.currentCity;
-      System.out.println(trip.route);
-      System.out.println(trip.remaining);
-      System.out.println("TRIP_SIZE: "+trip.size);
-      System.out.println("REM_SIZE: "+trip.remaining.size());
-
-      assert(trip.size + trip.remaining.size() == numCities);
-      //System.out.println("@"+cur+" A.R:"+trip.remaining);
       for(int city : trip.remaining.toArray()) {
         if(city != trip.firstCity) {
           results.add(new TSPAction(city, distanceBetween(cur, city)));
@@ -73,26 +67,32 @@ public class EuclideanTSP extends SearchProblem {
   public double heuristic(State state) {
     TSPState trip = (TSPState) state;
 
+    if(isGoal(trip)) {
+      return 0;
+    }
+
     //System.out.println("heuristic: "+trip.route+" R:"+trip.remaining);
-    TIntHashSet rest = trip.remaining;
+    TIntHashSet rest = new TIntHashSet(trip.remaining);
     rest.add(trip.firstCity);
+
+    assert(!trip.remaining.contains(trip.firstCity));
 
     return MSTLength.calculate(rest.toArray(), cities);
   }
 
 
   private TIntHashSet remainingCities(TIntArrayList visited) {
+    if(visited.size() > numCities) {
+      return new TIntHashSet();
+    }
+
     TIntHashSet opposite = new TIntHashSet();
     for(int id=0; id<numCities; id++) {
       if(!visited.contains(id)) {
         opposite.add(id);
       }
     }
-    System.out.println("V_SIZE: "+visited.size());
-    System.out.println("R_SIZE: "+opposite.size());
     assert(visited.size() + opposite.size() == numCities);
-    //System.out.println("V: "+visited);
-    //System.out.println("R: "+opposite);
     return opposite;
   }
 
@@ -107,32 +107,47 @@ public class EuclideanTSP extends SearchProblem {
     route.add(nextTrip.city);
 
     TIntHashSet remaining = remainingCities(route);
-    assert(route.size() + remaining.size() == numCities);
-
     return new TSPState(total, route, remaining);
   }
 
 
 
 
-  public static EuclideanTSP random(int n) {
+  public static TSPPoint[] random(int n) {
     Random rand = new Random(13);
     TSPPoint[] cities = new TSPPoint[n];
     for(int i=0; i<n; i++) {
       cities[i] = new TSPPoint(rand.nextDouble(), rand.nextDouble());
     }
-    return new EuclideanTSP(cities);
+    return cities;
   }
 
   public static void main(String[] args) {
-    long start = System.currentTimeMillis();
-
-    SearchResult box = AStar.search(new EuclideanTSP(new TSPPoint[] { new TSPPoint(0,0), new TSPPoint(1,0), new TSPPoint(1,1), new TSPPoint(1,0) }));
+    SearchResult box = AStar.search(new EuclideanTSP(new TSPPoint[] { new TSPPoint(0,0), new TSPPoint(1,0), new TSPPoint(1,1), new TSPPoint(0,1) }));
     System.out.println(box.result.state);
     System.out.println(box.result.cost);
-    assert(box.result.cost == 5);
+    SearchNode n = box.result;
+    while(n != null && n.action != null) {
+      System.out.println(n.action);
+      n = n.parent;
+    }
+
+    assert(box.result.cost == 4);
 
     SearchResult line = AStar.search(new EuclideanTSP(new TSPPoint[] { new TSPPoint(0,0), new TSPPoint(1,0), new TSPPoint(2,0), new TSPPoint(3,0), new TSPPoint(10,0), new TSPPoint(15,0), new TSPPoint(20,0) }));
+    System.out.println(line.result.state);
+    System.out.println(line.result.cost);
     assert(line.result.cost == 40);
+
+    TSPPoint[] cities = EuclideanTSP.random(10);
+    SearchResult opt = AStar.bfs(new EuclideanTSP(cities));
+    System.out.println(opt.result.cost);
+    System.out.println(opt.result.state);
+
+    SearchResult heur = AStar.search(new EuclideanTSP(cities));
+    System.out.println(heur.result.cost);
+    System.out.println(heur.result.state);
+
+    assert(heur.result.cost == opt.result.cost);
   }
 }
