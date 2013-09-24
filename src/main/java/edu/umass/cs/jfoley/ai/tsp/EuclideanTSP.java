@@ -110,9 +110,6 @@ public class EuclideanTSP extends SearchProblem {
     return new TSPState(total, route, remaining);
   }
 
-
-
-
   public static TSPPoint[] random(int n) {
     Random rand = new Random();
     TSPPoint[] cities = new TSPPoint[n];

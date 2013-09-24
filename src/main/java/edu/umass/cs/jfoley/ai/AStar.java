@@ -1,17 +1,13 @@
 package edu.umass.cs.jfoley.ai;
 
-import gnu.trove.set.hash.THashSet;
-
-import java.util.Comparator;
-import java.util.List;
-import java.util.PriorityQueue;
+import java.util.*;
 
 public class AStar {
   public static SearchResult generic(SearchProblem prob, Comparator<SearchNode> cmp) {
-    PriorityQueue<SearchNode> frontier = new PriorityQueue<SearchNode>(10, cmp);
+    PriorityQueue<SearchNode> frontier = new PriorityQueue<SearchNode>(10000, cmp);
     frontier.offer(prob.startNode());
 
-    THashSet<State> explored = new THashSet<State>();
+    Set<State> explored = new HashSet<State>();
 
     while(!frontier.isEmpty()) {
       SearchNode candidate = frontier.poll();

@@ -31,6 +31,6 @@ public class KnightState extends State {
 
   @Override
   public int hashCode() {
-    return Utility.hash(x) ^ Utility.hash(y);
+    return (Utility.hash(x) * 17) ^ Utility.hash(y);
   }
 }

@@ -48,7 +48,14 @@ public class KnightProblem extends SearchProblem {
   @Override
   public double heuristic(State from) {
     KnightState here = (KnightState) from;
-    return (Math.abs(goal.x - here.x) + Math.abs(goal.y - here.y)) / 3.0;
+
+    double dx = goal.x - here.x;
+    double dy = goal.y - here.y;
+    double mdh = ((double) (Math.abs(dx) + Math.abs(dy))) / 3.0;
+
+    //System.out.println("("+dx+","+dy+")" + " h:"+mdh);
+
+    return mdh;
   }
 
   @Override
