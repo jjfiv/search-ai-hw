@@ -114,7 +114,7 @@ public class EuclideanTSP extends SearchProblem {
 
 
   public static TSPPoint[] random(int n) {
-    Random rand = new Random(13);
+    Random rand = new Random();
     TSPPoint[] cities = new TSPPoint[n];
     for(int i=0; i<n; i++) {
       cities[i] = new TSPPoint(rand.nextDouble(), rand.nextDouble());
@@ -139,15 +139,26 @@ public class EuclideanTSP extends SearchProblem {
     System.out.println(line.result.cost);
     assert(line.result.cost == 40);
 
-    TSPPoint[] cities = EuclideanTSP.random(10);
-    SearchResult opt = AStar.bfs(new EuclideanTSP(cities));
-    System.out.println(opt.result.cost);
-    System.out.println(opt.result.state);
+    // proof by probabilistic guarantee
+    int numTrials = 10000;
 
-    SearchResult heur = AStar.search(new EuclideanTSP(cities));
-    System.out.println(heur.result.cost);
-    System.out.println(heur.result.state);
+    for(int i=0; i<numTrials; i++) {
+      TSPPoint[] cities = EuclideanTSP.random(7);
+      SearchResult opt = AStar.bfs(new EuclideanTSP(cities));
+      System.out.println(opt.result.cost);
+      System.out.println(opt.result.state);
 
-    assert(heur.result.cost == opt.result.cost);
+      SearchResult heur = AStar.search(new EuclideanTSP(cities));
+      System.out.println(heur.result.cost);
+      System.out.println(heur.result.state);
+      if(heur.result.cost != opt.result.cost) {
+        System.out.println("Problem on which A* != BFS:");
+        for(TSPPoint city : cities) {
+          System.out.println(city);
+        }
+      }
+      assert(heur.result.cost == opt.result.cost);
+    }
+
   }
 }

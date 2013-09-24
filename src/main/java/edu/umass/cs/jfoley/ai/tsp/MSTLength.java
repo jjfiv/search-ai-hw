@@ -37,11 +37,6 @@ public class MSTLength {
       return 0;
     }
 
-    int[] sets = new int[indices.length];
-    for(int i=0; i<indices.length; i++) {
-      sets[i] = i;
-    }
-
     // sort edges by weight:
     PriorityQueue<MSTEdge> edges = new PriorityQueue<MSTEdge>(100, new Comparator<MSTEdge>() {
       @Override
@@ -50,18 +45,22 @@ public class MSTLength {
       }
     });
 
+    // generate edges
     for(int i=0; i<indices.length; i++) {
       for(int j=i+1; j<indices.length; j++) {
         edges.offer(new MSTEdge(points, indices, i, j));
       }
     }
 
-    double h = 0;
+    int[] sets = new int[indices.length];
+    for(int i=0; i<indices.length; i++) {
+      sets[i] = i;
+    }
 
+    // calculate length of minimum spanning tree by grouping the smallest edges until they're all in the same group
+    double h = 0;
     while(!edges.isEmpty()) {
       MSTEdge edge = edges.poll();
-      //System.out.println(edge);
-      //System.out.println("a: "+edge.a+" s: "+sets[edge.a]+" b: "+edge.b+" s: "+sets[edge.b]);
       if(sets[edge.a] != sets[edge.b]) {
         // merge set a and b
         int pullIn = sets[edge.b];
@@ -69,9 +68,7 @@ public class MSTLength {
           if(sets[i] == pullIn) {
             sets[i] = sets[edge.a];
           }
-          //System.out.print(sets[i]+" ");
         }
-        //System.out.println();
         h += edge.weight;
       }
     }
